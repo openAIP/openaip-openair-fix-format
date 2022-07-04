@@ -161,17 +161,31 @@ class FixFormat {
      * @private
      */
     _formatBlock(blockLines) {
-        const formattedTokens = [];
+        const formattedLines = [];
 
-        for (const line of blockLines) {
+        const dpRegex = new RegExp(/^DP\s+.*$/);
+
+        let firstDp = null;
+        for (let idx = 0; idx < blockLines.length; idx++) {
+            const line = blockLines[idx];
             // remove blank lines from airspace definition block
             if (line === '') {
                 continue;
             }
-            formattedTokens.push(line);
+            formattedLines.push(line);
+
+            if (dpRegex.test(line)) {
+                if (firstDp) {
+                    if (idx === blockLines.length - 1 && firstDp !== line) {
+                        formattedLines.push(firstDp);
+                    }
+                } else {
+                    firstDp = line;
+                }
+            }
         }
 
-        return formattedTokens;
+        return formattedLines;
     }
 
     /**
