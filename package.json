@@ -32,6 +32,7 @@
         "update-packages": "ncu --target minor --upgrade --reject jsts && npm install"
     },
     "dependencies": {
+        "@openaip/openair-parser": "^1.5.1",
         "check-types": "^11.1.2",
         "n-readlines": "^1.0.3",
         "node-notifier": "^10.0.1",

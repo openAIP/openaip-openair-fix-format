@@ -1,5 +1,6 @@
 const fs = require('node:fs');
 const checkTypes = require('check-types');
+const Parser = require('@openaip/openair-parser/src/parser');
 
 /**
  * Reads OpenAIR file from given input filepath and fixes formatting. The fixed OpenAIR string is written to
@@ -45,123 +46,19 @@ class FixFormat {
     async fixFormat({ inFile }) {
         checkTypes.assert.nonEmptyString(inFile);
 
-        let currentLine = 0;
         const fixedLines = [];
-        // read a single airspace definition block into "blockLines" array as long as this flag is true
-        let readBlockLines = false;
-        // contains lines for a single read airspace definition block
-        const blockLines = [];
-        const lines = await fs.readFileSync(inFile).toString();
-        // replace multiple new lines with single new line
-        const preparedLines = this._reduceBlankLines(lines).split('\n');
 
-        for (let idx = 0; idx < preparedLines.length; idx++) {
-            currentLine = idx + 1;
-            // get current line as string
-            const lineString = preparedLines[idx].toString().trim();
-            if (this._isAcLine(lineString) && readBlockLines === false) {
-                // start new block
-                readBlockLines = true;
-                blockLines.push(lineString);
-            } else if (
-                (this._isAcLine(lineString) && readBlockLines === true) ||
-                currentLine === preparedLines.length
-            ) {
-                // if new AC block starts, fix last airspace definition block lines and start new block
-                const fixed = this._fixBlockLines(blockLines);
-                fixedLines.push(...fixed);
-                // clear block lines
-                readBlockLines = false;
-                blockLines.length = 0;
-                // add blank at the end of block
-                fixedLines.push('');
-            } else if (readBlockLines) {
-                // read block lines
-                blockLines.push(lineString);
-            } else {
-                fixedLines.push(lineString);
-            }
+        const parser = new Parser({ validateGeometry: false, fixGeometry: false });
+        await parser.parse(inFile);
+
+        for (const asp of parser.airspaces) {
+            const { consumedTokens } = asp;
+            consumedTokens.forEach((token) => {
+                fixedLines.push(token.line);
+            });
         }
 
         return fixedLines;
-    }
-
-    /**
-     * Remove multiple subsequent blank lines from string.
-     *
-     * @param {string} lineString
-     * @return {string}
-     * @private
-     */
-    _reduceBlankLines(lineString) {
-        return lineString.replace(/\n\s*\n/g, '\n');
-    }
-
-    _fixBlockLines(blockLines) {
-        const fixedLines = [];
-        for (let idx = 0; idx < blockLines.length; idx++) {
-            const lineString = blockLines[idx];
-            // omit subsequent blank lines or blanks inside airspace definition block
-            if (
-                (this._isBlankLine(lineString) && this._nextLineIsBlank(blockLines, idx)) ||
-                (this._isBlankLine(lineString) && this._nextLineIsAc(blockLines, idx) === false)
-            ) {
-                continue;
-            }
-            // add line to fixed lines
-            fixedLines.push(lineString);
-        }
-
-        return fixedLines;
-    }
-
-    /**
-     * @param {string[]} lines
-     * @param {number} idx
-     * @return {boolean}
-     * @private
-     */
-    _nextLineIsAc(lines, idx) {
-        const nextLine = lines[idx + 1];
-        if (nextLine == null) return false;
-
-        return this._isAcLine(nextLine);
-    }
-
-    /**
-     * @param {string} line
-     * @return {boolean}
-     * @private
-     */
-    _isBlankLine(line) {
-        checkTypes.assert.string(line);
-
-        return line.length === 0;
-    }
-
-    /**
-     * @param {string} line
-     * @return {boolean}
-     * @private
-     */
-    _isAcLine(line) {
-        checkTypes.assert.string(line);
-
-        return /^AC\s+.*$/.test(line);
-    }
-
-    /**
-     * @param {string} outFile
-     * @param {string} fixedOpenair
-     *
-     * @return {Promise<void>}
-     * @private
-     */
-    async _writeFixed(outFile, fixedOpenair) {
-        checkTypes.assert.nonEmptyString(outFile);
-        checkTypes.assert.nonEmptyString(fixedOpenair);
-
-        await fs.writeFileSync(outFile, fixedOpenair);
     }
 
     /**
