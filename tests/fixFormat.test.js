@@ -1,9 +1,9 @@
-const FixFornat = require('../src/fix-format');
+const FixFormat = require('../src/fix-format');
 const fs = require('node:fs');
 
 describe('test fixing blank lines in OpenAIR file', () => {
     test('fix blank lines in single airspace definition', async () => {
-        const fixFormat = new FixFornat();
+        const fixFormat = new FixFormat();
         const fixedOpenair = await fixFormat.fixFormat({
             inFile: './tests/fixtures/fix-blank-lines-single-airspace.txt',
         });
