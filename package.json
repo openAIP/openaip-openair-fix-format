@@ -1,0 +1,57 @@
+{
+    "name": "@openaip/openair-fix-syntax",
+    "version": "1.5.1",
+    "description": "OpenAIR format syntax fixer. Parses openAIR formatted string, removes unnecessary blank lines and makes sure that geometry start and end points are equal.",
+    "authors": [
+        {
+            "name": "Stephan Besser",
+            "email": "stephan@openaip.net",
+            "homepage": "https://www.openaip.net",
+            "role": "Lead developer"
+        }
+    ],
+    "main": "index.js",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/openAIP/openaip-openair-fix-syntax.git"
+    },
+    "publishConfig": {
+        "registry": "https://npm.pkg.github.com/"
+    },
+    "bugs": {
+        "url": "https://github.com/openAIP/openaip-openair-fix-syntax/issues"
+    },
+    "homepage": "https://github.com/openAIP/openaip-openair-fix-syntax#readme",
+    "scripts": {
+        "test": "TZ='UTC' NODE_ENV=test jest --forceExit -c jest.config.js tests/**",
+        "test-watch": "TZ='UTC' NODE_ENV=test jest --forceExit -c jest.config.js tests/** --watch",
+        "lint": "eslint -c .eslintrc.js .",
+        "run-security-audit": "npm audit --production",
+        "bump-version": "bump -c 'version bump to ' -tp",
+        "update-packages": "ncu --target minor --upgrade --reject jsts && npm install"
+    },
+    "dependencies": {
+        "check-types": "^11.1.2",
+        "n-readlines": "^1.0.3",
+        "node-notifier": "^10.0.1",
+        "uuid": "^8.3.2"
+    },
+    "devDependencies": {
+        "@babel/eslint-parser": "^7.17.0",
+        "@types/check-types": "^7.3.3",
+        "@types/jest": "^27.5.1",
+        "@types/uuid": "^8.3.4",
+        "commander": "^2.20.3",
+        "eslint": "^8.16.0",
+        "eslint-config-prettier": "^8.5.0",
+        "eslint-plugin-import": "^2.26.0",
+        "eslint-plugin-only-warn": "^1.0.3",
+        "eslint-plugin-prettier": "^4.0.0",
+        "jest": "^27.5.1",
+        "nodemon": "^2.0.16",
+        "npm-check-updates": "^12.5.12",
+        "prettier": "^2.6.2",
+        "version-bump-prompt": "^6.1.0"
+    }
+}
