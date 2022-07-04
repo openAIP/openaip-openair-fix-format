@@ -51,7 +51,7 @@ class FixFormat {
     async fixFormat({ inFile }) {
         checkTypes.assert.nonEmptyString(inFile);
 
-        const fixedTokens = [];
+        const formatted = [];
         const blockTokens = [];
         let readBlock = false;
 
@@ -60,57 +60,36 @@ class FixFormat {
 
         for (let idx = 0; idx < tokens.length; idx++) {
             const token = tokens[idx];
-            const nextBlockToken = this._getNextBlockToken(tokens, idx);
+            const nextToken = tokens[idx + 1];
 
-            // start reading lines for new airspace block
-            if (
-                (readBlock === false && token.getType() === CommentToken.type) ||
-                (readBlock === false && token.getType() === BlankToken.type) ||
-                (readBlock === false && token.getType() === SkippedToken.type)
+            // remove subsequent blank lines, only keep a single blank line
+            if (token.getType() === BlankToken.type && nextToken.getType() === BlankToken.type) {
+                continue;
+            } else if (
+                token.getType() === BlankToken.type ||
+                token.getType() === CommentToken.type ||
+                token.getType() === SkippedToken.type
             ) {
-                fixedTokens.push(token);
-            }
-            // start collecting tokens of new airspace block
-            else if (token?.getType() === AcToken.type && readBlock === false) {
-                readBlock = true;
-                blockTokens.push(token);
-            }
-            // "format" read airspace block, add formatted lines to fix lines and start reading new airspace block
-            // also handle airspace definition block at end of file
-            else if (
-                (token?.getType() === AcToken.type && readBlock === true) ||
-                (idx === tokens.length - 1 && blockTokens.length > 0)
-            ) {
-                readBlock = false;
-                const formattedBlock = this._formatBlock(blockTokens);
-                fixedTokens.push(formattedBlock);
-                // clear read block tokens, ready for new block
-                blockTokens.length = 0;
-                // start new block with AC token
-                readBlock = true;
-                blockTokens.push(token);
-            }
-            // read block lines
-            else if (readBlock === true) {
-                blockTokens.push(token);
+                // add non aspc block tokens directly to formatted list
+                formatted.push(token);
             } else {
-                fixedTokens.push(token);
+                throw new Error('Unhandled state.');
             }
         }
 
-        const fixedLines = [];
-        for (const token of fixedTokens) {
+        const formattedLines = [];
+        for (const token of formatted) {
             if (token instanceof BaseLineToken) {
-                fixedLines.push(token.getTokenized().line);
+                formattedLines.push(token.getTokenized().line);
             } else {
                 // dump complete airspace definition block
-                fixedLines.push(...token.map((value) => value.getTokenized().line));
+                formattedLines.push(...token.map((value) => value.getTokenized().line));
                 // inject a single blank after airspace definition block
-                fixedLines.push('');
+                formattedLines.push('');
             }
         }
 
-        return fixedLines;
+        return formattedLines;
     }
 
     /**
