@@ -173,7 +173,7 @@ class FixFormat {
                 continue;
             }
             formattedLines.push(line);
-
+            // make sure that the start DP matches the last DP in block's geometry definition
             if (dpRegex.test(line)) {
                 if (firstDp) {
                     if (idx === blockLines.length - 1 && firstDp !== line) {
