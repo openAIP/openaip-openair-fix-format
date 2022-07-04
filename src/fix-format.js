@@ -5,7 +5,7 @@ const AcToken = require('./tokens/ac-token');
 const BlankToken = require('./tokens/blank-token');
 const CommentToken = require('./tokens/comment-token');
 const SkippedToken = require('./tokens/skipped-token');
-const BaseLineToken = require('./tokens/base-line-token');
+const EofToken = require('./tokens/eof-token');
 
 /**
  * Reads OpenAIR file from given input filepath and fixes formatting. The fixed OpenAIR string is written to
@@ -21,7 +21,7 @@ class FixFormat {
 
     /**
      * @param {{inFile: string, outFile: string}} config
-     * @return {*}
+     * @return {void}
      */
     async fix({ inFile, outFile }) {
         checkTypes.assert.nonEmptyString(inFile);
@@ -62,34 +62,69 @@ class FixFormat {
             const token = tokens[idx];
             const nextToken = tokens[idx + 1];
 
+            // end of file
+            if (token.getType() === EofToken.type) {
+                break;
+            }
+
             // remove subsequent blank lines, only keep a single blank line
             if (token.getType() === BlankToken.type && nextToken.getType() === BlankToken.type) {
                 continue;
-            } else if (
-                token.getType() === BlankToken.type ||
-                token.getType() === CommentToken.type ||
-                token.getType() === SkippedToken.type
-            ) {
-                // add non aspc block tokens directly to formatted list
-                formatted.push(token);
+            }
+
+            if (readBlock) {
+                if (this._isBlockToken(tokens, idx)) {
+                    blockTokens.push(token.getTokenized().line);
+                } else {
+                    readBlock = false;
+                    formatted.push(...this._formatBlock(blockTokens));
+                    blockTokens.length = 0;
+                }
             } else {
-                throw new Error('Unhandled state.');
+                // read "in-between-blocks" comments and blanks
+                if (
+                    token.getType() === BlankToken.type ||
+                    token.getType() === CommentToken.type ||
+                    token.getType() === SkippedToken.type
+                ) {
+                    // add non aspc block tokens directly to formatted list
+                    formatted.push(token.getTokenized().line);
+                }
+                // start reading new airspace definition block
+                else if (token.getType() === AcToken.type) {
+                    readBlock = true;
+                    blockTokens.push(token.getTokenized().line);
+                } else {
+                    throw new Error('Unhandled state.');
+                }
             }
         }
 
-        const formattedLines = [];
-        for (const token of formatted) {
-            if (token instanceof BaseLineToken) {
-                formattedLines.push(token.getTokenized().line);
-            } else {
-                // dump complete airspace definition block
-                formattedLines.push(...token.map((value) => value.getTokenized().line));
-                // inject a single blank after airspace definition block
-                formattedLines.push('');
+        const fixed = [];
+        let lastLine = null;
+        for (const line of formatted) {
+            if (line === '' && lastLine === '') {
+                continue;
             }
+            fixed.push(line);
         }
 
-        return formattedLines;
+        return fixed;
+    }
+
+    /**
+     * Check that token at the given idx is inside an airspace definition block.
+     *
+     * @param {Object[]} tokens
+     * @param {number} idx
+     * @return {boolean}
+     * @private
+     */
+    _isBlockToken(tokens, idx) {
+        const nextBlockToken = this._getNextBlockToken(tokens, idx);
+
+        // if next block token is NOT an AC token, the token is considered to be inside an airspace definition block
+        return nextBlockToken.getType() !== AcToken.type && nextBlockToken.getType() !== EofToken.type;
     }
 
     /**
@@ -114,20 +149,22 @@ class FixFormat {
     }
 
     /**
-     * @param {Token[]} blockTokens
-     * @return {Token[]}
+     * @param {string[]} blockLines
+     * @return {string[]}
      * @private
      */
-    _formatBlock(blockTokens) {
+    _formatBlock(blockLines) {
         const formattedTokens = [];
 
-        for (const token of blockTokens) {
+        for (const line of blockLines) {
             // remove blank lines from airspace definition block
-            if (token.getType() === BlankToken.type) {
+            if (line === '') {
                 continue;
             }
-            formattedTokens.push(token);
+            formattedTokens.push(line);
         }
+        // add a blank line after each airspace definition block
+        formattedTokens.push('');
 
         return formattedTokens;
     }
