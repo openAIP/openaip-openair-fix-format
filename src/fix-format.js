@@ -1,6 +1,8 @@
 const fs = require('node:fs');
 const checkTypes = require('check-types');
-const Parser = require('@openaip/openair-parser/src/parser');
+const Tokenizer = require('./tokenizer');
+const AcToken = require('./tokens/ac-token');
+const BlankToken = require('./tokens/blank-token');
 
 /**
  * Reads OpenAIR file from given input filepath and fixes formatting. The fixed OpenAIR string is written to
@@ -46,19 +48,65 @@ class FixFormat {
     async fixFormat({ inFile }) {
         checkTypes.assert.nonEmptyString(inFile);
 
+        const fixedTokens = [];
+        const blockTokens = [];
+        let readBlock = false;
+
+        const tokenizer = new Tokenizer();
+        const tokens = tokenizer.tokenize(inFile);
+
+        for (let idx = 0; idx < tokens.length; idx++) {
+            const token = tokens[idx];
+            // start reading lines for new airspace block
+            if (token.getType() === AcToken.type && readBlock === false) {
+                readBlock = true;
+                blockTokens.push(token);
+            }
+            // "format" last read airspace block, add formatted lines to fix lines and start reading new airspace block
+            // also handle airspace definition block at end of file
+            else if (
+                (token.getType() === AcToken.type && readBlock === true) ||
+                (idx === tokens.length - 1 && blockTokens.length > 0)
+            ) {
+                readBlock = false;
+                const formattedBlock = this._formatBlock(blockTokens);
+                formattedBlock.forEach((token) => fixedTokens.push(token));
+                blockTokens.length = 0;
+                readBlock = true;
+            }
+            // read block lines
+            else if (readBlock === true) {
+                blockTokens.push(token);
+            } else {
+                fixedTokens.push(token);
+            }
+        }
+
         const fixedLines = [];
-
-        const parser = new Parser({ validateGeometry: false, fixGeometry: false });
-        await parser.parse(inFile);
-
-        for (const asp of parser.airspaces) {
-            const { consumedTokens } = asp;
-            consumedTokens.forEach((token) => {
-                fixedLines.push(token.line);
-            });
+        for (const token of fixedTokens) {
+            fixedLines.push(token.getTokenized().line);
         }
 
         return fixedLines;
+    }
+
+    /**
+     * @param {Token[]} blockTokens
+     * @return {Token[]}
+     * @private
+     */
+    _formatBlock(blockTokens) {
+        const formattedTokens = [];
+
+        // remove blank lines from airspace definition block
+        for (const token of blockTokens) {
+            if (token.getType() === BlankToken.type) {
+                continue;
+            }
+            formattedTokens.push(token);
+        }
+
+        return formattedTokens;
     }
 
     /**

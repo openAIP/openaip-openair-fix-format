@@ -3,9 +3,12 @@
 A utility that fixes [OpenAIR](http://www.winpilot.com/usersguide/userairspace.asp) format for Node. Removes unnecessary
 blank lines and makes sure that defined geometries are "closed", i.e. start coordinate equals end coordinate.
 
-**Please note that this utility will not validate the given OpenAIR file in terms of correct syntax!**
+Internally the logic uses our [OpenAIR Parser](https://github.com/openAIP/openaip-openair-parser) to also validate the
+given OpenAIR file syntax.
 
-If you require a more robust solution that is able to validate and fix geometries, please use our [OpenAIR Parser](https://github.com/openAIP/openaip-openair-parser).
+**Please note that this utility will not validate/fix the given OpenAIR geometries!**
+
+If you require a robust solution that is able to validate and fix geometries, please feel free to use our [OpenAIR Parser](https://github.com/openAIP/openaip-openair-parser).
 
 Reads OpenAIR airspace definitions:
 

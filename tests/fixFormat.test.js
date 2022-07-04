@@ -9,11 +9,9 @@ describe('test fixing blank lines in OpenAIR file', () => {
         });
 
         // read from expected file and remove last "blank line" in file (automatically added by IDE)
-        let expected = await fs
-            .readFileSync('./tests/fixtures/expected-fix-blank-lines-single-airspace.txt', 'utf-8')
-            .toString();
+        let expected = await fs.readFileSync('./tests/fixtures/expected-fix-blank-lines-single-airspace.txt', 'utf-8');
 
-        expect(fixedOpenair.join('\n')).toEqual(expected);
+        expect(fixedOpenair.join('\n') + '\n').toEqual(expected);
     });
     test('fix blank lines in multiple airspace definitions', async () => {
         const fixFormat = new FixFormat();
