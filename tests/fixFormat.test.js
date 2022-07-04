@@ -1,10 +1,10 @@
-const FixSyntax = require('../src/fix-syntax');
+const FixFornat = require('../src/fix-format');
 const fs = require('node:fs');
 
-describe('test fixing blank lines in OpenAIR syntax', () => {
+describe('test fixing blank lines in OpenAIR file', () => {
     test('fix blank lines in single airspace definition', async () => {
-        const fixSyntax = new FixSyntax();
-        const fixedOpenair = await fixSyntax.fixSyntax({
+        const fixFormat = new FixFornat();
+        const fixedOpenair = await fixFormat.fixFormat({
             inFile: './tests/fixtures/fix-blank-lines-single-airspace.txt',
         });
 
@@ -16,8 +16,8 @@ describe('test fixing blank lines in OpenAIR syntax', () => {
         expect(fixedOpenair.join('\n')).toEqual(expected);
     });
     test('fix blank lines in multiple airspace definitions', async () => {
-        const fixSyntax = new FixSyntax();
-        const fixedOpenair = await fixSyntax.fixSyntax({
+        const fixFormat = new FixFormat();
+        const fixedOpenair = await fixFormat.fixFormat({
             inFile: './tests/fixtures/fix-blank-lines-multiple-airspaces.txt',
         });
 

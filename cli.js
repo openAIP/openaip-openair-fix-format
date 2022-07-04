@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const FixSyntax = require('./src/fix-syntax');
+const FixFormat = require('./src/fix-format');
 const program = require('commander');
 
 program
@@ -9,9 +9,9 @@ program
     .parse(process.argv);
 
 (async () => {
-    const fixSyntax = new FixSyntax();
+    const fixFormat = new FixFormat();
     try {
-        await fixSyntax.fix({ inFile: program.inputFilepath, outFile: program.outputFilepath });
+        await fixFormat.fix({ inFile: program.inputFilepath, outFile: program.outputFilepath });
     } catch (e) {
         console.log(e.message);
     }

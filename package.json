@@ -1,5 +1,5 @@
 {
-    "name": "@openaip/openair-fix-syntax",
+    "name": "@openaip/openair-fix-format",
     "version": "1.5.1",
     "description": "OpenAIR format syntax fixer. Parses openAIR formatted string, removes unnecessary blank lines and makes sure that geometry start and end points are equal.",
     "authors": [
@@ -14,15 +14,15 @@
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/openAIP/openaip-openair-fix-syntax.git"
+        "url": "git+https://github.com/openAIP/openaip-openair-fix-format.git"
     },
     "publishConfig": {
         "registry": "https://npm.pkg.github.com/"
     },
     "bugs": {
-        "url": "https://github.com/openAIP/openaip-openair-fix-syntax/issues"
+        "url": "https://github.com/openAIP/openaip-openair-fix-format/issues"
     },
-    "homepage": "https://github.com/openAIP/openaip-openair-fix-syntax#readme",
+    "homepage": "https://github.com/openAIP/openaip-openair-fix-format#readme",
     "scripts": {
         "test": "TZ='UTC' NODE_ENV=test jest --forceExit -c jest.config.js tests/**",
         "test-watch": "TZ='UTC' NODE_ENV=test jest --forceExit -c jest.config.js tests/** --watch",

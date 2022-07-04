@@ -1,3 +1,3 @@
-const FixSyntax = require('./src/fix-syntax');
+const FixFormat = require('./src/fix-format');
 
-module.exports = FixSyntax;
+module.exports = FixFormat;

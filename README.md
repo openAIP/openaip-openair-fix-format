@@ -1,7 +1,11 @@
-# OpenAIR Fix Syntax
+# OpenAIR Fix Format
 
-A utility that fixes [OpenAIR](http://www.winpilot.com/usersguide/userairspace.asp) syntax for Node. Removes unnecessary
+A utility that fixes [OpenAIR](http://www.winpilot.com/usersguide/userairspace.asp) format for Node. Removes unnecessary
 blank lines and makes sure that defined geometries are "closed", i.e. start coordinate equals end coordinate.
+
+**Please note that this utility will not validate the given OpenAIR file in terms of correct syntax!**
+
+If you require a more robust solution that is able to validate and fix geometries, please use our [OpenAIR Parser](https://github.com/openAIP/openaip-openair-parser).
 
 Reads OpenAIR airspace definitions:
 
@@ -41,16 +45,16 @@ DP 54:25:00 N 010:40:00 E
 Install
 =
 ```shell
-npm install @openaip/openair-fix-syntax
+npm install @openaip/openair-fix-format
 ```
 
 Node
 =
 
 ```javascript
-const fixSyntax = require('@openaip/openair-fix-syntax');
+const fixFormat = require('@openaip/openair-fix-format');
 
-await fixSyntax.fix({in: './path/to/input-openair-file.txt', out:'./path/to/output-openair-file.txt'});
+await fixFormat.fix({in: './path/to/input-openair-file.txt', out:'./path/to/output-openair-file.txt'});
 ```
 
 CLI
