@@ -9,10 +9,12 @@ describe('test fixing blank lines in OpenAIR file', () => {
         });
 
         // read from expected file and remove last "blank line" in file (automatically added by IDE)
-        let expected = await fs.readFileSync('./tests/fixtures/expected-fix-blank-lines-single-airspace.txt', 'utf-8');
+        const expected = await fs
+            .readFileSync('./tests/fixtures/expected-fix-blank-lines-single-airspace.txt', 'utf-8')
+            .split('\n');
 
         // make sure to also take "last blank line added by IDE" into account
-        expect(fixedOpenair.join('\n') + '\n').toEqual(expected);
+        expect(removeBlanksAtEof(fixedOpenair).join('\n')).toEqual(removeBlanksAtEof(expected).join('\n'));
     });
     test('fix blank lines in multiple airspace definitions', async () => {
         const fixFormat = new FixFormat();
@@ -22,9 +24,25 @@ describe('test fixing blank lines in OpenAIR file', () => {
 
         const expected = await fs
             .readFileSync('./tests/fixtures/expected-fix-blank-lines-multiple-airspaces.txt', 'utf-8')
-            .toString();
+            .split('\n');
 
         // make sure to also take "last blank line added by IDE" into account
-        expect(fixedOpenair.join('\n') + '\n').toEqual(expected);
+        expect(removeBlanksAtEof(fixedOpenair).join('\n')).toEqual(removeBlanksAtEof(expected).join('\n'));
     });
 });
+
+/**
+ * Takes a list of string and removes all blank lines at the end of the list.
+ *
+ * @param {string[]} lines
+ * @return {string[]}
+ */
+function removeBlanksAtEof(lines) {
+    let lastLine = lines[lines.length - 1];
+    if (lastLine.trim() === '') {
+        lines.pop();
+        lastLine = lines[lines.length - 1];
+    }
+
+    return lines;
+}

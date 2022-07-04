@@ -61,6 +61,7 @@ class FixFormat {
         for (let idx = 0; idx < tokens.length; idx++) {
             const token = tokens[idx];
             const nextToken = tokens[idx + 1];
+            const nextBlockToken = this._getNextBlockToken(tokens, idx);
 
             // end of file
             if (token.getType() === EofToken.type) {
@@ -75,10 +76,23 @@ class FixFormat {
             if (readBlock) {
                 if (this._isBlockToken(tokens, idx)) {
                     blockTokens.push(token.getTokenized().line);
-                } else {
+                }
+                // format block and add to formatted list
+                else if (
+                    nextBlockToken.getType() === AcToken.type ||
+                    nextToken.getType() === EofToken.type ||
+                    nextBlockToken.getType() === EofToken.type
+                ) {
                     readBlock = false;
+                    blockTokens.push(token.getTokenized().line);
                     formatted.push(...this._formatBlock(blockTokens));
+                    // if next token is not a blank token, add one
+                    if (nextToken.getType() !== BlankToken.type) {
+                        formatted.push('');
+                    }
                     blockTokens.length = 0;
+                } else {
+                    throw new Error('Unhandled state.');
                 }
             } else {
                 // read "in-between-blocks" comments and blanks
@@ -100,16 +114,7 @@ class FixFormat {
             }
         }
 
-        const fixed = [];
-        let lastLine = null;
-        for (const line of formatted) {
-            if (line === '' && lastLine === '') {
-                continue;
-            }
-            fixed.push(line);
-        }
-
-        return fixed;
+        return formatted;
     }
 
     /**
@@ -135,8 +140,10 @@ class FixFormat {
      * @private
      */
     _getNextBlockToken(tokens, idx) {
-        while (idx < tokens.length) {
-            const token = tokens[idx];
+        let next = idx + 1;
+
+        while (next < tokens.length) {
+            const token = tokens[next];
             if (
                 token.getType() !== BlankToken.type &&
                 token.getType() !== CommentToken.type &&
@@ -144,7 +151,7 @@ class FixFormat {
             ) {
                 return token;
             }
-            idx++;
+            next++;
         }
     }
 
@@ -163,8 +170,6 @@ class FixFormat {
             }
             formattedTokens.push(line);
         }
-        // add a blank line after each airspace definition block
-        formattedTokens.push('');
 
         return formattedTokens;
     }
