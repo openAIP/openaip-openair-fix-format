@@ -3,6 +3,9 @@ const checkTypes = require('check-types');
 const Tokenizer = require('./tokenizer');
 const AcToken = require('./tokens/ac-token');
 const BlankToken = require('./tokens/blank-token');
+const CommentToken = require('./tokens/comment-token');
+const SkippedToken = require('./tokens/skipped-token');
+const BaseLineToken = require('./tokens/base-line-token');
 
 /**
  * Reads OpenAIR file from given input filepath and fixes formatting. The fixed OpenAIR string is written to
@@ -40,7 +43,7 @@ class FixFormat {
     }
 
     /**
-     * Reads the contents of the given file and fixes the format. Returns the fixed string.
+     * Reads the contents of the given file and fixes the format. Returns a list of fixed lines.
      *
      * @param {string} inFile
      * @return {Promise<string[]>}
@@ -57,22 +60,35 @@ class FixFormat {
 
         for (let idx = 0; idx < tokens.length; idx++) {
             const token = tokens[idx];
+            const nextBlockToken = this._getNextBlockToken(tokens, idx);
+
             // start reading lines for new airspace block
-            if (token.getType() === AcToken.type && readBlock === false) {
+            if (
+                (readBlock === false && token.getType() === CommentToken.type) ||
+                (readBlock === false && token.getType() === BlankToken.type) ||
+                (readBlock === false && token.getType() === SkippedToken.type)
+            ) {
+                fixedTokens.push(token);
+            }
+            // start collecting tokens of new airspace block
+            else if (token?.getType() === AcToken.type && readBlock === false) {
                 readBlock = true;
                 blockTokens.push(token);
             }
-            // "format" last read airspace block, add formatted lines to fix lines and start reading new airspace block
+            // "format" read airspace block, add formatted lines to fix lines and start reading new airspace block
             // also handle airspace definition block at end of file
             else if (
-                (token.getType() === AcToken.type && readBlock === true) ||
+                (token?.getType() === AcToken.type && readBlock === true) ||
                 (idx === tokens.length - 1 && blockTokens.length > 0)
             ) {
                 readBlock = false;
                 const formattedBlock = this._formatBlock(blockTokens);
-                formattedBlock.forEach((token) => fixedTokens.push(token));
+                fixedTokens.push(formattedBlock);
+                // clear read block tokens, ready for new block
                 blockTokens.length = 0;
+                // start new block with AC token
                 readBlock = true;
+                blockTokens.push(token);
             }
             // read block lines
             else if (readBlock === true) {
@@ -84,10 +100,38 @@ class FixFormat {
 
         const fixedLines = [];
         for (const token of fixedTokens) {
-            fixedLines.push(token.getTokenized().line);
+            if (token instanceof BaseLineToken) {
+                fixedLines.push(token.getTokenized().line);
+            } else {
+                // dump complete airspace definition block
+                fixedLines.push(...token.map((value) => value.getTokenized().line));
+                // inject a single blank after airspace definition block
+                fixedLines.push('');
+            }
         }
 
         return fixedLines;
+    }
+
+    /**
+     * Returns the next block token, i.e. token that is NOT a skipped, blank or comment token.
+     *
+     * @param {Object[]} tokens
+     * @param {number} idx
+     * @private
+     */
+    _getNextBlockToken(tokens, idx) {
+        while (idx < tokens.length) {
+            const token = tokens[idx];
+            if (
+                token.getType() !== BlankToken.type &&
+                token.getType() !== CommentToken.type &&
+                token.getType() !== SkippedToken.type
+            ) {
+                return token;
+            }
+            idx++;
+        }
     }
 
     /**
@@ -98,8 +142,8 @@ class FixFormat {
     _formatBlock(blockTokens) {
         const formattedTokens = [];
 
-        // remove blank lines from airspace definition block
         for (const token of blockTokens) {
+            // remove blank lines from airspace definition block
             if (token.getType() === BlankToken.type) {
                 continue;
             }

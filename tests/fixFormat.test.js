@@ -11,6 +11,7 @@ describe('test fixing blank lines in OpenAIR file', () => {
         // read from expected file and remove last "blank line" in file (automatically added by IDE)
         let expected = await fs.readFileSync('./tests/fixtures/expected-fix-blank-lines-single-airspace.txt', 'utf-8');
 
+        // make sure to also take "last blank line added by IDE" into account
         expect(fixedOpenair.join('\n') + '\n').toEqual(expected);
     });
     test('fix blank lines in multiple airspace definitions', async () => {
@@ -23,6 +24,7 @@ describe('test fixing blank lines in OpenAIR file', () => {
             .readFileSync('./tests/fixtures/expected-fix-blank-lines-multiple-airspaces.txt', 'utf-8')
             .toString();
 
-        expect(fixedOpenair.join('\n')).toEqual(expected);
+        // make sure to also take "last blank line added by IDE" into account
+        expect(fixedOpenair.join('\n') + '\n').toEqual(expected);
     });
 });
