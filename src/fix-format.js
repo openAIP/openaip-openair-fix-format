@@ -34,7 +34,7 @@ class FixFormat {
             // read OpenAIR string from specified file and fix format
             const fixedOpenair = await this.fixFormat({ inFile });
             // write fixed OpenAIR string to specified file
-            await this._writeFixed(outFile, fixedOpenair.join('\n'));
+            await fs.writeFileSync(outFile, fixedOpenair.join('\n'));
 
             console.log(`Successfully fixed OpenAIR from file '${inFile}'. Fixed file: '${outFile}'`);
         } catch (e) {
