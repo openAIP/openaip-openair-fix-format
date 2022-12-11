@@ -155,7 +155,7 @@ If _AF_ is present, defines the ground station name. May not be used without the
 Install
 =
 ```shell
-npm install @openaip/openair-fix-format
+npm install -g @openaip/openair-fix-format
 ```
 
 Node
