@@ -3,12 +3,12 @@
 A utility that fixes [OpenAIR](http://www.winpilot.com/usersguide/userairspace.asp) format for Node. This tool
 supports both the **original** and the **extended** format.
 Removes unnecessary blank lines,makes sure that defined geometries are "closed", i.e. start coordinate equals end coordinate and can
-also set required _AI_ tag for the **extended** OpenAIr format.
+also set required _AI_ tag for the **extended** OpenAIR format.
 
-Internally the logic uses our [OpenAIR Parser](https://github.com/openAIP/openaip-openair-parser) to also validate the
+Internally, the logic uses parts of our [OpenAIR Parser](https://github.com/openAIP/openaip-openair-parser) to also validate the
 given OpenAIR file syntax.
 
-**Please note that this utility will not validate/fix the given OpenAIR airspace defintion!**
+**Please note that this utility will not validate/fix the given OpenAIR airspace definitions!**
 
 If you require a robust solution that is able to validate tag values and fix geometries, please feel free to use our [OpenAIR Parser](https://github.com/openAIP/openaip-openair-parser).
 
@@ -47,10 +47,9 @@ DP 54:20:00 N 010:40:00 E
 DP 54:25:00 N 010:40:00 E
 ```
 
-### Fixes and extends to **extended OpenAIR** airspace definitions with `extendedFormat: false`:
+### Fixes and extends to **extended OpenAIR** airspace definitions with `extendFormat: false`:
 
-Re-arranges tokens to be in expected order. If the _AI_ token is not present, it will be injected into each airspace
-definition block with a random UUID v4 value.
+If the _AI_ token is not present, it will be injected into each airspace definition block with a random UUID v4 value.
 
 ```text
 AC UNCLASSIFIED
@@ -58,6 +57,51 @@ AY R
 AN ED-R10B Todendorf-Putlos MON-SAT+
 AH 40000ft MSL
 AL GND
+AG Station Name
+AF 123.456
+DP 54:25:00 N 010:40:00 E
+
+DP 54:25:00 N 010:50:00 E
+DP 54:26:00 N 010:53:00 E
+DP 54:19:30 N 010:53:00 E
+
+DP 54:15:00 N 010:41:00 E
+DP 54:15:19 N 010:40:00 E
+DP 54:20:00 N 010:40:00 E
+```
+
+Outputs fixed OpenAIR string:
+
+```text
+AC UNCLASSIFIED
+AY R
+AN ED-R10B Todendorf-Putlos MON-SAT+
+AI f456b6cf-177a-4947-95f6-08cc255b7e90
+AG Station Name
+AF 123.456
+AH 40000ft MSL
+AL GND
+DP 54:25:00 N 010:40:00 E
+DP 54:25:00 N 010:50:00 E
+DP 54:26:00 N 010:53:00 E
+DP 54:19:30 N 010:53:00 E
+DP 54:15:00 N 010:41:00 E
+DP 54:15:19 N 010:40:00 E
+DP 54:20:00 N 010:40:00 E
+DP 54:25:00 N 010:40:00 E
+```
+
+### Fixes and extends to **extended OpenAIR** airspace definitions with `extendFormat: false`. Re-arrange tokens with `fix-token-order: true`:
+
+Inject the _AI_ token if no set for each airspace definition block. Additionally, re-orders token to be in the expected order.
+**Note that using this feature will remove all inline comments from the file!**
+
+```text
+AC UNCLASSIFIED
+AY R
+AN ED-R10B Todendorf-Putlos MON-SAT+
+AL GND
+AH 40000ft MSL
 AG Station Name
 AF 123.456
 DP 54:25:00 N 010:40:00 E
@@ -135,6 +179,7 @@ Options:
   -f, --input-filepath <inFilepath>    The input file path to the openAIR file.
   -o, --output-filepath <outFilepath>  The output filename of the generated fixed OpenAIR file.
   -E, --extend-format                  If true, an additional "AI" token with a unique identifier is injected into each airspace block so that the file is compatible with the extended OpenAIR format. Defaults to "false".
+  -O  --fix-token-order                If true, will re-order found tokens and put them into the expected order. Note that this will remove all inline comments from the airspace definition blocks! Defaults to "false".
   -h, --help                           Outputs usage information.
 ```
 

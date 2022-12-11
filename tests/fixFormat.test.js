@@ -63,7 +63,7 @@ describe('test fixing start/end DP definitions in OpenAIR airspace definition bl
 
 describe('test extended format fixing', () => {
     test('re-arrange extended tokens', async () => {
-        const fixFormat = new FixFormat();
+        const fixFormat = new FixFormat({ extendFormat: true, fixTokenOrder: true });
         const fixedOpenair = await fixFormat.fixFormat({
             inFile: './tests/fixtures/fix-extended-format-tags.txt',
         });

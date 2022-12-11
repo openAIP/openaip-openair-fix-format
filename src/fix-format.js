@@ -25,14 +25,17 @@ class FixFormat {
     /**
      * @param {Object} [config]
      * @param {Object} [config.extendFormat] - If true, an additional "AI" token with a unique identifier is injected into each airspace block so that the file is compatible with the extended OpenAIR format. Defaults to "false".
+     * @param {Object} [config.fixTokenOrder] - If true, will re-order found tokens and put them into the expected order. Note that this will remove all inline comments from the airspace definition blocks! Defaults to "false".
      */
     constructor(config) {
-        const defaultOptions = { extendFormat: false };
-        const { extendFormat } = Object.assign(defaultOptions, config);
+        const defaultOptions = { extendFormat: false, fixTokenOrder: false };
+        const { extendFormat, fixTokenOrder } = Object.assign(defaultOptions, config);
 
         checkTypes.assert.boolean(extendFormat);
+        checkTypes.assert.boolean(fixTokenOrder);
 
         this.extendFormat = extendFormat;
+        this.fixTokenOrder = fixTokenOrder;
     }
 
     /**
@@ -91,6 +94,11 @@ class FixFormat {
 
             if (readBlock) {
                 if (this.isBlockToken(tokens, idx)) {
+                    // If tokens should be re-ordered, inline comments are removed. Keeping
+                    // comments and ordering them with the specific token is currently not supported.
+                    if (this.fixTokenOrder && token.getType() === CommentToken.type) {
+                        continue;
+                    }
                     blockTokens.push(token);
                 }
                 // format block and add to formatted list
