@@ -12,6 +12,12 @@ const checkTypes = require('check-types');
  */
 class AcToken extends BaseLineToken {
     static type = 'AC';
+    /**
+     * Sets the order weight. The lower the number, the higher the token ranks when ordered. 'AC' token has the lowest
+     * order number because it has to be the first token in an airspace definition block.
+     * @type {number}
+     */
+    static orderWeight = 0;
 
     canHandle(line) {
         checkTypes.assert.string(line);

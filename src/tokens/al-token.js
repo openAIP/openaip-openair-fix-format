@@ -6,6 +6,12 @@ const checkTypes = require('check-types');
  */
 class AlToken extends BaseLineToken {
     static type = 'AL';
+    /**
+     * Sets the order weight. The lower the number, the higher the token ranks when ordered.
+     *
+     * @type {number}
+     */
+    static orderWeight = 7;
 
     canHandle(line) {
         checkTypes.assert.string(line);

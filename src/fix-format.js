@@ -1,22 +1,38 @@
 const fs = require('node:fs');
 const checkTypes = require('check-types');
 const Tokenizer = require('./tokenizer');
+const AnToken = require('./tokens/an-token');
 const AcToken = require('./tokens/ac-token');
+const AiToken = require('./tokens/ai-token');
+const DaToken = require('./tokens/da-token');
+const DcToken = require('./tokens/dc-token');
+const DpToken = require('./tokens/dp-token');
+const DyToken = require('./tokens/dy-token');
+const VdToken = require('./tokens/vd-token');
+const VwToken = require('./tokens/vw-token');
+const VxToken = require('./tokens/vx-token');
 const BlankToken = require('./tokens/blank-token');
 const CommentToken = require('./tokens/comment-token');
 const SkippedToken = require('./tokens/skipped-token');
 const EofToken = require('./tokens/eof-token');
+const { randomUUID } = require('node:crypto');
 
 /**
  * Reads OpenAIR file from given input filepath and fixes formatting. The fixed OpenAIR string is written to
- * the configured output filepath.
+ * the configured output filepath. Both the standard and extended OpenAIR format is supported.
  */
 class FixFormat {
     /**
-     * @param {{}} [options]
+     * @param {Object} [config]
+     * @param {Object} [config.extendFormat] - If true, an additional "AI" token with a unique identifier is injected into each airspace block so that the file is compatible with the extended OpenAIR format. Defaults to "false".
      */
-    constructor(options) {
-        this.options = options;
+    constructor(config) {
+        const defaultOptions = { extendFormat: false };
+        const { extendFormat } = Object.assign(defaultOptions, config);
+
+        checkTypes.assert.boolean(extendFormat);
+
+        this.extendFormat = extendFormat;
     }
 
     /**
@@ -30,7 +46,7 @@ class FixFormat {
         try {
             console.log(`Read OpenAIR file '${inFile}'`);
 
-            await this._enforceFileExists(inFile);
+            await this.enforceFileExists(inFile);
             // read OpenAIR string from specified file and fix format
             const fixedOpenair = await this.fixFormat({ inFile });
             // write fixed OpenAIR string to specified file
@@ -55,13 +71,13 @@ class FixFormat {
         const blockTokens = [];
         let readBlock = false;
 
-        const tokenizer = new Tokenizer();
+        const tokenizer = new Tokenizer({ extendFormat: this.extendFormat });
         const tokens = tokenizer.tokenize(inFile);
 
         for (let idx = 0; idx < tokens.length; idx++) {
             const token = tokens[idx];
             const nextToken = tokens[idx + 1];
-            const nextBlockToken = this._getNextBlockToken(tokens, idx);
+            const nextBlockToken = this.getNextBlockToken(tokens, idx);
 
             // end of file
             if (token.getType() === EofToken.type) {
@@ -74,8 +90,8 @@ class FixFormat {
             }
 
             if (readBlock) {
-                if (this._isBlockToken(tokens, idx)) {
-                    blockTokens.push(token.getTokenized().line);
+                if (this.isBlockToken(tokens, idx)) {
+                    blockTokens.push(token);
                 }
                 // format block and add to formatted list
                 else if (
@@ -84,8 +100,8 @@ class FixFormat {
                     nextBlockToken.getType() === EofToken.type
                 ) {
                     readBlock = false;
-                    blockTokens.push(token.getTokenized().line);
-                    formatted.push(...this._formatBlock(blockTokens));
+                    blockTokens.push(token);
+                    formatted.push(...this.fixBlock(blockTokens));
                     // if next token is not a blank token, add one
                     if (nextToken.getType() !== BlankToken.type) {
                         formatted.push('');
@@ -107,7 +123,7 @@ class FixFormat {
                 // start reading new airspace definition block
                 else if (token.getType() === AcToken.type) {
                     readBlock = true;
-                    blockTokens.push(token.getTokenized().line);
+                    blockTokens.push(token);
                 } else {
                     throw new Error('Unhandled state.');
                 }
@@ -125,8 +141,8 @@ class FixFormat {
      * @return {boolean}
      * @private
      */
-    _isBlockToken(tokens, idx) {
-        const nextBlockToken = this._getNextBlockToken(tokens, idx);
+    isBlockToken(tokens, idx) {
+        const nextBlockToken = this.getNextBlockToken(tokens, idx);
 
         // if next block token is NOT an AC token, the token is considered to be inside an airspace definition block
         return nextBlockToken.getType() !== AcToken.type && nextBlockToken.getType() !== EofToken.type;
@@ -139,7 +155,7 @@ class FixFormat {
      * @param {number} idx
      * @private
      */
-    _getNextBlockToken(tokens, idx) {
+    getNextBlockToken(tokens, idx) {
         let next = idx + 1;
 
         while (next < tokens.length) {
@@ -156,36 +172,93 @@ class FixFormat {
     }
 
     /**
-     * @param {string[]} blockLines
+     * Takes a list of tokens that form an airspace definition block and fixes it.
+     *
+     * @param {Object[]} blockTokens
      * @return {string[]}
      * @private
      */
-    _formatBlock(blockLines) {
-        const formattedLines = [];
-
-        const dpRegex = new RegExp(/^DP\s+.*$/);
+    fixBlock(blockTokens) {
+        const metaTokens = [];
+        const geomTokens = [];
+        let readingMeta = true;
 
         let firstDp = null;
-        for (let idx = 0; idx < blockLines.length; idx++) {
-            const line = blockLines[idx];
+        for (let idx = 0; idx < blockTokens.length; idx++) {
+            const token = blockTokens[idx];
+
             // remove blank lines from airspace definition block
-            if (line === '') {
+            if (token.getType() === BlankToken.type) {
                 continue;
             }
-            formattedLines.push(line);
+
+            // read the "meta" part above the geometry definition
+            if (readingMeta && this.isGeometryToken(token)) {
+                readingMeta = false;
+            }
+            if (readingMeta) {
+                metaTokens.push(token);
+            } else {
+                geomTokens.push(token);
+            }
+
             // make sure that the start DP matches the last DP in block's geometry definition
-            if (dpRegex.test(line)) {
+            if (token.getType() === DpToken.type) {
                 if (firstDp) {
-                    if (idx === blockLines.length - 1 && firstDp !== line) {
-                        formattedLines.push(firstDp);
+                    if (idx === blockTokens.length - 1 && firstDp.getTokenized().line !== token.getTokenized().line) {
+                        geomTokens.push(firstDp);
                     }
                 } else {
-                    firstDp = line;
+                    firstDp = token;
                 }
             }
         }
 
-        return formattedLines;
+        // re-order "meta"-tokens
+        metaTokens.sort((a, b) => {
+            const aWeight = a.getOrderWeight();
+            const bWeight = b.getOrderWeight();
+
+            if (aWeight > bWeight) return 1;
+            if (aWeight < bWeight) return -1;
+
+            return 0;
+        });
+
+        // inject an AI token if not present
+        const hasAiToken = metaTokens.find((value) => value.getType() === AiToken.type) != null;
+        const fixedTokens = metaTokens.concat(geomTokens);
+        const fixedBlockLines = [];
+        for (const token of fixedTokens) {
+            // add the AI token if specified to "extended" format and if there is no AI token yet
+            if (this.extendFormat && token.getType() === AnToken.type && hasAiToken === false) {
+                // generate AI tage with random UUID v4
+                fixedBlockLines.push(`AI ${randomUUID()}`);
+            }
+            fixedBlockLines.push(token.getTokenized().line);
+        }
+
+        return fixedBlockLines;
+    }
+
+    /**
+     * Checks if input token is part of a geometry definition.
+     *
+     * @param token
+     * @return {boolean}
+     */
+    isGeometryToken(token) {
+        const tokenType = token.getType();
+
+        return [
+            DaToken.type,
+            DcToken.type,
+            DpToken.type,
+            DyToken.type,
+            VdToken.type,
+            VwToken.type,
+            VxToken.type,
+        ].includes(tokenType);
     }
 
     /**
@@ -196,7 +269,7 @@ class FixFormat {
      * @return {Promise<void>}
      * @private
      */
-    async _enforceFileExists(filepath) {
+    async enforceFileExists(filepath) {
         if ((await fs.existsSync(filepath)) === false) {
             throw new Error(`Specified file '${filepath}' does not exist.`);
         }

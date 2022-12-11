@@ -14,6 +14,10 @@ const DbToken = require('./tokens/db-token');
 const DaToken = require('./tokens/da-token');
 const DyToken = require('./tokens/dy-token');
 const EofToken = require('./tokens/eof-token');
+const AiToken = require('./tokens/ai-token');
+const AyToken = require('./tokens/ay-token');
+const AfToken = require('./tokens/af-token');
+const AgToken = require('./tokens/ag-token');
 const LineByLine = require('n-readlines');
 const fs = require('node:fs');
 const TokenizerError = require('./exceptions/tokenizer-error');
@@ -38,6 +42,10 @@ const TokenizerError = require('./exceptions/tokenizer-error');
  * @property {string} DA_TOKEN
  * @property {string} EOF_TOKEN
  * @property {string} SKIPPED_TOKEN
+ * @property {string} AI_TOKEN
+ * @property {string} AY_TOKEN
+ * @property {string} AF_TOKEN
+ * @property {string} AG_TOKEN
  */
 const TOKEN_TYPES = {
     COMMENT_TOKEN: CommentToken.type,
@@ -56,6 +64,11 @@ const TOKEN_TYPES = {
     DY_TOKEN: DyToken.type,
     EOF_TOKEN: EofToken.type,
     SKIPPED_TOKEN: SkippedToken.type,
+    // extended format tokens
+    AI_TOKEN: AiToken.type,
+    AY_TOKEN: AyToken.type,
+    AF_TOKEN: AfToken.type,
+    AG_TOKEN: AgToken.type,
 };
 
 /**
@@ -73,9 +86,19 @@ const TOKEN_TYPES = {
  * Reads the contents of a give file and tokenizes it. Each line will result in a single token.
  * Each token holds a tokenized representation of the read line. The tokenizer will return a list of all read
  * and created tokens. The tokenizer will throw a syntax error on the first error that is encountered.
+ *
+ * Both the standard and extended OpenAIR format is supported.
  */
 class Tokenizer {
-    constructor() {
+    /**
+     * @param {Object} [config]
+     * @param {Object} [config.extendFormat] - If true, an additional "AI" token with a unique identifier is injected into each airspace block so that the file is compatible with the extended OpenAIR format. Defaults to "false".
+     */
+    constructor(config) {
+        const defaultConfig = { extendFormat: false };
+
+        const { extendFormat } = Object.assign(defaultConfig, config);
+
         /** @type {Token[]} */
         this.tokenizers = [
             new CommentToken({ tokenTypes: TOKEN_TYPES }),
@@ -93,7 +116,13 @@ class Tokenizer {
             new DbToken({ tokenTypes: TOKEN_TYPES }),
             new DaToken({ tokenTypes: TOKEN_TYPES }),
             new DyToken({ tokenTypes: TOKEN_TYPES }),
+            new AiToken({ tokenTypes: TOKEN_TYPES }),
+            new AyToken({ tokenTypes: TOKEN_TYPES }),
+            new AfToken({ tokenTypes: TOKEN_TYPES }),
+            new AgToken({ tokenTypes: TOKEN_TYPES }),
         ];
+
+        this.extendFormat = extendFormat;
         /** @type {Token[]} */
         this.tokens = [];
         // previous processed token, used to validate correct token order

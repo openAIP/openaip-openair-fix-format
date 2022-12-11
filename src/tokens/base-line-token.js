@@ -7,8 +7,6 @@ const checkTypes = require('check-types');
  */
 
 class BaseLineToken {
-    static type = '';
-
     /**
      * @param {TokenConfig} config
      */
@@ -21,6 +19,28 @@ class BaseLineToken {
         this.tokenized = null;
     }
 
+    static type = '';
+    /**
+     * Sets the order weight. The lower the number, the higher the token ranks when ordered.
+     *
+     * @type {number}
+     */
+    static orderWeight = 0;
+
+    /**
+     * @return {string}
+     */
+    getType() {
+        return this.constructor.type;
+    }
+
+    /**
+     * @return {number}
+     */
+    getOrderWeight() {
+        return this.constructor.orderWeight;
+    }
+
     /**
      * Most tokens are considered to be not ignored tokens. Blank, comment and other
      * specific tokens that are not handled are considered to be "ignored" tokens.
@@ -29,13 +49,6 @@ class BaseLineToken {
      */
     isIgnoredToken() {
         return false;
-    }
-
-    /**
-     * @return {string}
-     */
-    getType() {
-        return this.constructor.type;
     }
 
     /**
@@ -54,7 +67,7 @@ class BaseLineToken {
      *
      * @param {string} line
      * @param {number} lineNumber
-     * @return {Token}
+     * @return {BaseLineToken}
      */
     tokenize(line, lineNumber) {
         throw new Error('NOT_IMPLEMENTED');

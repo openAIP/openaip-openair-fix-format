@@ -61,6 +61,23 @@ describe('test fixing start/end DP definitions in OpenAIR airspace definition bl
     });
 });
 
+describe('test extended format fixing', () => {
+    test('re-arrange extended tokens', async () => {
+        const fixFormat = new FixFormat();
+        const fixedOpenair = await fixFormat.fixFormat({
+            inFile: './tests/fixtures/fix-extended-format-tags.txt',
+        });
+
+        // read from expected file and remove last "blank line" in file (automatically added by IDE)
+        const expected = await fs
+            .readFileSync('./tests/fixtures/expected-fix-extended-format-tags.txt', 'utf-8')
+            .split('\n');
+
+        // make sure to also take "last blank line added by IDE" into account
+        expect(removeBlanksAtEof(fixedOpenair).join('\n')).toEqual(removeBlanksAtEof(expected).join('\n'));
+    });
+});
+
 /**
  * Takes a list of string and removes all blank lines at the end of the list.
  *

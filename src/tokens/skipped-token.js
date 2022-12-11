@@ -15,15 +15,18 @@ class SkippedToken extends CommentToken {
         checkTypes.assert.string(line);
 
         // line contains a skipped token
-        return /^(AT|TO|TC|SP|SB|V Z=\d|AF|AG|AY).*$/.test(line);
+        return /^(AT|TO|TC|SP|SB|V Z=\d).*$/.test(line);
     }
 
     tokenize(line, lineNumber) {
+        const token = new SkippedToken({ tokenTypes: this.tokenTypes });
+
         checkTypes.assert.string(line);
         checkTypes.assert.integer(lineNumber);
 
-        const token = new SkippedToken({ tokenTypes: this.tokenTypes });
-        token.tokenized = { line, lineNumber, metadata: { line } };
+        // keep original line
+        token.line = line;
+        token.tokenized = { line, lineNumber };
 
         return token;
     }
