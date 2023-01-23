@@ -33,8 +33,7 @@
         "test": "TZ='UTC' NODE_ENV=test jest --forceExit -c jest.config.js tests/**",
         "test-watch": "TZ='UTC' NODE_ENV=test jest --forceExit -c jest.config.js tests/** --watch",
         "lint": "eslint -c .eslintrc.js .",
-        "run-security-audit": "npm audit --production",
-        "bump-version": "bump -c 'version bump to ' -tp",
+        "run-security-audit": "npm audit --omit=dev",
         "update-packages": "ncu --target minor --upgrade --reject jsts && npm install"
     },
     "dependencies": {
@@ -48,15 +47,14 @@
         "@types/jest": "^27.5.2",
         "@types/uuid": "^8.3.4",
         "commander": "^2.20.3",
-        "eslint": "^8.29.0",
-        "eslint-config-prettier": "^8.5.0",
-        "eslint-plugin-import": "^2.26.0",
+        "eslint": "^8.32.0",
+        "eslint-config-prettier": "^8.6.0",
+        "eslint-plugin-import": "^2.27.5",
         "eslint-plugin-only-warn": "^1.1.0",
         "eslint-plugin-prettier": "^4.2.1",
         "jest": "^27.5.1",
         "nodemon": "^2.0.20",
         "npm-check-updates": "^12.5.12",
-        "prettier": "^2.8.1",
-        "version-bump-prompt": "^6.1.0"
+        "prettier": "^2.8.3"
     }
 }
