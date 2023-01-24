@@ -1,37 +1,42 @@
-name: Create NPM package
 on:
     push:
-        branches:
-            - master
+        # Sequence of patterns matched against refs/tags
+        tags:
+            - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+
+name: Create Release
+
 jobs:
     run-tests:
         name: Run tests
-        runs-on: ubuntu-22.04
-        if: "contains(github.event.head_commit.message, '#build-major') || contains(github.event.head_commit.message, '#build-minor') || contains(github.event.head_commit.message, '#build-patch')"
+        runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
-            - uses: actions/setup-node@v3
+            - uses: actions/checkout@v2
+            - uses: actions/setup-node@v2
               with:
-                  node-version: 18
+                  node-version: 16
                   registry-url: https://npm.pkg.github.com/
                   scope: '@openaip'
             - run: npm install
               env:
-                  NODE_AUTH_TOKEN: ${{secrets.GHPR_NPM_TOKEN}}
+                  #NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+                  NODE_AUTH_TOKEN: ${{secrets.AUTOMATOR_PAT_PACKAGE_TOKEN}}
             - run: npm run test
               env:
-                  NODE_AUTH_TOKEN: ${{secrets.GHPR_NPM_TOKEN}}
+                  #NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+                  NODE_AUTH_TOKEN: ${{secrets.AUTOMATOR_PAT_PACKAGE_TOKEN}}
             - run: npm run lint
             # TODO Un-comment as soon as security fix for google libraries is out
             #
             # - run: npm run run-security-audit
+
     create-release:
         name: Create Release
         needs: run-tests
-        runs-on: ubuntu-22.04
+        runs-on: ubuntu-latest
         steps:
             - name: Checkout code
-              uses: actions/checkout@v3
+              uses: actions/checkout@v2
             - name: Create Release
               id: create_release
               uses: actions/create-release@v1
@@ -46,12 +51,28 @@ jobs:
                       - Second Change
                   draft: false
                   prerelease: false
-    publish-package-github:
-        needs: run-tests
-        runs-on: ubuntu-22.04
+
+    build-package:
+        needs: create-release
+        runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
-            - uses: actions/setup-node@v3
+            - uses: actions/checkout@v2
+            - uses: actions/setup-node@v2
+              with:
+                  node-version: 16
+                  registry-url: https://npm.pkg.github.com/
+                  scope: '@openaip'
+            - run: npm ci
+              env:
+                  #NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+                  NODE_AUTH_TOKEN: ${{secrets.AUTOMATOR_PAT_PACKAGE_TOKEN}}
+
+    publish-package-github:
+        needs: build-package
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+            - uses: actions/setup-node@v2
               with:
                   # TODO set to v15 when https://github.com/actions/setup-node/issues/213 is fixed
                   node-version: 14
@@ -59,16 +80,18 @@ jobs:
                   scope: '@openaip'
             - run: npm ci --only=prod
               env:
-                  NODE_AUTH_TOKEN: ${{secrets.GHPR_NPM_TOKEN}}
+                  #NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+                  NODE_AUTH_TOKEN: ${{secrets.AUTOMATOR_PAT_PACKAGE_TOKEN}}
             - run: npm publish
               env:
-                  NODE_AUTH_TOKEN: ${{secrets.GHPR_NPM_TOKEN}}
+                  NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
     publish-package-npm:
-        needs: run-tests
-        runs-on: ubuntu-22.04
+        needs: build-package
+        runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
-            - uses: actions/setup-node@v3
+            - uses: actions/checkout@v2
+            - uses: actions/setup-node@v2
               with:
                   # TODO set to v15 when https://github.com/actions/setup-node/issues/213 is fixed
                   node-version: 14
