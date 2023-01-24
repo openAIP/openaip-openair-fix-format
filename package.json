@@ -34,6 +34,7 @@
         "test-watch": "TZ='UTC' NODE_ENV=test jest --forceExit -c jest.config.js tests/** --watch",
         "lint": "eslint -c .eslintrc.js .",
         "run-security-audit": "npm audit --omit=dev",
+        "bump-version": "bump -c 'version bump to ' -tp",
         "update-packages": "ncu --target minor --upgrade --reject jsts && npm install"
     },
     "dependencies": {
@@ -55,6 +56,7 @@
         "jest": "^27.5.1",
         "nodemon": "^2.0.20",
         "npm-check-updates": "^16.6.3",
-        "prettier": "^2.8.3"
+        "prettier": "^2.8.3",
+        "version-bump-prompt": "^6.1.0"
     }
 }
