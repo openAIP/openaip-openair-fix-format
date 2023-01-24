@@ -47,8 +47,9 @@ jobs:
                   release_name: Release ${{ github.ref }}
                   body: |
                       Changes in this Release
-                      - First Change
-                      - Second Change
+
+                      Various fixes and improvements.
+                      ${{ github.event.head_commit.message }}
                   draft: false
                   prerelease: false
 
