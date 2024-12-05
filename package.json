@@ -30,11 +30,11 @@
     },
     "homepage": "https://github.com/openAIP/openaip-openair-fix-format#readme",
     "scripts": {
-        "test": "TZ='UTC' NODE_ENV=test jest --forceExit -c jest.config.js tests/**",
-        "test-watch": "TZ='UTC' NODE_ENV=test jest --forceExit -c jest.config.js tests/** --watch",
+        "test": "vitest run --coverage",
         "lint": "eslint -c .eslintrc.js .",
         "run-security-audit": "npm audit --omit=dev",
-        "update-packages": "ncu --target minor --upgrade --reject jsts && npm install"
+        "format": "prettier --plugin-search-dir . --write .",
+        "update-packages": "ncu --target minor --upgrade --reject jsts && npm install && npm audit fix"
     },
     "dependencies": {
         "check-types": "^11.2.2",
@@ -45,7 +45,7 @@
         "@babel/eslint-parser": "^7.19.1",
         "@types/check-types": "^7.3.4",
         "@types/uuid": "^8.3.4",
-                "@vitest/coverage-v8": "^2.1.8",
+        "@vitest/coverage-v8": "^2.1.8",
         "@vitest/ui": "^2.1.8",
         "commander": "^2.20.3",
         "eslint": "^8.32.0",

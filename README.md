@@ -136,39 +136,44 @@ DP 54:20:00 N 010:40:00 E
 DP 54:25:00 N 010:40:00 E
 ```
 
-Extended OpenAIR Format
-=
+# Extended OpenAIR Format
+
 The **original** OpenAIR format specification has multiple shortcomings to meet today's demand to reflect the various types of existing airspaces
 and provide additional metadata. To overcome these shortcomings, an **extended** OpenAIR format is introduced that has several new tags.
 
 ### Extended Format Tags:
 
 #### AI
+
 A required unique identifier string for each airspace, e.g. a [UUID v4](https://en.wikipedia.org/wiki/Universally_unique_identifier). The _AI_ value must stay the same for each airspace throughout different versions if the file. The _AI_ tag must be placed either before or directly after the _AN_ tag. Placing the _AI_ tag before the _AN_ tag is preferred
+
 #### AY
+
 The optional _AY_ tag specifies the airspace type, e.g. "TMA", "CTR" or "TMZ". Unlike in the original format, the _AC_ tag must now only be used to specify the airspace _ICAO class_. If airspace has no type, i.e. is only ICAO class, the _AY_ tag can be omitted. The _AY_ tag must be placed directly after the _AC_ tag.
+
 #### AF
+
 An optional tag that specifies the frequency of a ground station that provides information on the defined airspace. The _AF_ must be placed directly after either the _AI_ tag or the _AG_ tag. If placed after the _AG_ tag, the _AG_ tag must directly be placed after the _AI_ tag. The proposed best order is _AF_, then _AG_.
+
 #### AG
+
 If _AF_ is present, defines the ground station name. May not be used without the _AF_ tag. The _AG_ must be placed directly after either the _AF_ tag or the _AF_ tag. If placed after the _AG_ tag, the _AF_ tag must directly be placed after the _AI_ tag. The proposed best order is _AF_, then _AG_.
 
-Install
-=
+# Install
+
 ```shell
 npm install -g @openaip/openair-fix-format
 ```
 
-Node
-=
+# Node
 
 ```javascript
 const fixFormat = require('@openaip/openair-fix-format');
 
-await fixFormat.fix({in: './path/to/input-openair-file.txt', out:'./path/to/output-openair-file.txt'});
+await fixFormat.fix({ in: './path/to/input-openair-file.txt', out: './path/to/output-openair-file.txt' });
 ```
 
-CLI
-=
+# CLI
 
 ```bash
 node cli.js -h
