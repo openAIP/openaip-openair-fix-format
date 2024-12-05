@@ -1,5 +1,7 @@
 const FixFormat = require('../src/fix-format');
 const fs = require('node:fs');
+const viteTest = await import('vitest');
+const { describe, test, expect } = viteTest;
 
 describe('test fixing blank lines in OpenAIR file', () => {
     test('fix blank lines in single airspace definition', async () => {
