@@ -1,6 +1,6 @@
 {
     "name": "@openaip/openair-fix-format",
-    "version": "1.1.2",
+    "version": "1.1.3",
     "description": "OpenAIR format fixer. Parses openAIR formatted string, removes unnecessary blank lines and makes sure that geometry start and end points are equal.",
     "keywords": [
         "openaip",
