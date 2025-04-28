@@ -1,5 +1,11 @@
 # OpenAIR Fix Format
 
+
+# DEPRECATION NOTICE
+With the advent of LLMs available in most editors, this package has lost significant relevence. Fixing simple text files with a LLM is much easier and faster
+than using this tool. Keeping up-to-date with the current OpenAIR specifications in this package is very time consuming and since the package doesn't provide
+any real benefit over using an AI agent to change the file by a specific prompt, we decided to deprecate and archive this package.
+
 A utility that fixes [OpenAIR](http://www.winpilot.com/usersguide/userairspace.asp) format for Node. This tool
 supports both the **original** and the **extended** format.
 Removes unnecessary blank lines,makes sure that defined geometries are "closed", i.e. start coordinate equals end coordinate and can
